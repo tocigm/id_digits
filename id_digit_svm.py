@@ -9,8 +9,14 @@ import numpy as np
 import gzip
 import pickle
 
+from PIL import Image, ImageFilter
+from id_gray_digit_data import DENOISE_THRESHOLD
+
+NORMALISED = 2 # 0: no nomalise, 1: 0:1, 2: -1:1
+PCA = 0 # TODO LATER
+
 def run():
-    data_path = "/home/tra161/WORK/Data/bagiks/ID_DIGITS/gray_labelled/gray_data.pkl.gz"
+    data_path = "./gray_data.pkl.gz"
     with gzip.open(data_path,'rb') as f:
         u = pickle._Unpickler(f)
         u.encoding = 'latin1'
@@ -27,10 +33,16 @@ def run():
     accs = []
     models = []
     # Normalize data
-    max_ = np.amax(train_dat,axis=0)
-    min_ = np.amin(train_dat,axis=0)
-    train_dat =  2*(train_dat-min_)/(max_-min_)-1 # to -1:1
-    valid_dat =  2*(valid_dat-min_)/(max_-min_)-1 # to -1:1
+    max_=min_=0
+    if NORMALISED>0:
+        max_ = np.amax(train_dat,axis=0)
+        min_ = np.amin(train_dat,axis=0)
+        train_dat =  (train_dat-min_)/(max_-min_) 
+        valid_dat =  (valid_dat-min_)/(max_-min_)
+        if NORMALISED==2:
+            train_dat = train_dat*2-1
+            valid_dat = valid_dat*2-1
+        
     ##########################################################################
     """ SVM """
     try:
@@ -44,6 +56,9 @@ def run():
     except ValueError:
         accs.append(-1)
     models.append("SVM")
+
+    # The best model here, save it
+    save_model(clf,"SVM",max_,min_)
     ###########################################################################
     """ Naive Bayes """
     try:
@@ -108,11 +123,40 @@ def run():
         accs.append(-1)
     models.append("RF")
 
-
-    
     print("All results:")
     inds = np.argsort(accs)
     for inx in inds:
         print(models[inx] + " " + str(accs[inx]))
+
+def save_model(model,modelname,max_,min_):
+    with gzip.open("./model.pkl.gz","wb") as f:
+        pickle.dump({"model":model,
+                     "name":modelname,
+                     "max_":max_,
+                     "min_":min_},f)
+
+def test():
+    with gzip.open("./model.pkl.gz",'rb') as f:
+        u = pickle._Unpickler(f)
+        u.encoding = 'latin1'
+        data_dict = data_dict = u.load()
+        clf  = data_dict["model"]
+        max_ = data_dict["max_"]
+        min_ = data_dict["min_"]
+    clf.decision_function_shape="ovr"
+    
+    dat = Image.open("103_6_220601447+0.jpg")
+    
+    dat = np.asarray(dat)
+    dat = np.where(dat<DENOISE_THRESHOLD,dat,255)[np.newaxis,:,:]
+    dat = np.reshape(dat,[-1,dat.shape[1]*dat.shape[2]])
+    if NORMALISED>0:
+        dat = (dat-min_)/(max_-min_)
+        if NORMALISED>1:
+            dat = dat*2-1
+            
+    pred = np.argmax(clf.decision_function(dat),axis=1)
+    print(pred)    
 if __name__=="__main__":
     run()
+    test()

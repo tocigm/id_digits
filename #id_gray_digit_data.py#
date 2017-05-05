@@ -2,7 +2,7 @@ import glob
 import pickle
 import gzip
 import tensorflow as tf
-import numpy as np
+import numpy as npx
 from PIL import Image, ImageFilter
 import matplotlib.pyplot as plt
 import cv2
