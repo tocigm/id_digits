@@ -1,3 +1,15 @@
+How to run:
+
+A. Training & validation
+  + Prepare data: id_gray_digit_data.py
+              - set DATA_DIR to the data directory
+              - TRAINING_SIZE: % data for training, the rest is for validation
+              - DENOISE_THRESHOLD: all pixels over this values are considerred as noise and set to 255 (white background)
+  + Train/validation: id_digit_svm.py
+        All possible models are tested here, the data can be normalised to 0-1 or -1:1.
+        
+B. Predict: see test() in id_digit_svm.py
+
 # id_digits
 Without normalise:
 
