@@ -1,0 +1,11 @@
+#!/bin/bash
+# Add dependency onto projects
+PROJ_DIR=$HOME/WORK/projects/rtdrbm/tfcode
+PYTHONPATH=$PYTHONPATH:$PROJ_DIR
+export PYTHONPATH
+
+
+tstamp=`date +%s`
+outfile=$HOME/WORK/experiments/rtdrbm/pos/$tstamp".out"
+
+python3 $PROJ_DIR/examples/rnn_ocr_run.py
